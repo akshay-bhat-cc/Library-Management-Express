@@ -6,10 +6,18 @@ import { faker } from "@faker-js/faker";
 import { ITransaction, ITransactionBase } from "./models/transaction.model";
 import { IMemberBase } from "../member-management/models/member.model";
 import { rm } from "fs/promises";
+import { DBConfig } from "../db/mysqldb";
+import { AppEnvs } from "../read-env";
+import { MySqlConnectionFactory } from "../db/MySqlDbConnection";
 
 describe("TransactionRepository", () => {
-  const db: Database<LibraryDataset> = new Database("./data/mock-library.json");
-  const transactionRepository = new TransactionRepository(db);
+  const config: DBConfig = {
+    dbURL: AppEnvs.DATABASE_URL,
+  };
+
+  const transactionRepository = new TransactionRepository(
+    new MySqlConnectionFactory(config)
+  );
 
   beforeEach(async () => {
     await transactionRepository.deleteAll();

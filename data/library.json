@@ -9,7 +9,7 @@
       "numOfPages": 237,
       "totalNumOfCopies": 39,
       "id": 1,
-      "availableNumberOfCopies": 16
+      "availableNumberOfCopies": 15
     },
     {
       "title": "subito magni laborum",
@@ -2117,6 +2117,15 @@
       "dueDate": "Monday, 2024-07-15, 04:15:50",
       "returnDate": "Monday, 2024-07-08, 04:16:15",
       "Status": "Returned"
+    },
+    {
+      "id": 4,
+      "bookId": 1,
+      "memberId": 10,
+      "issueDate": "Monday, 2024-07-01, 04:50:08",
+      "dueDate": "Monday, 2024-07-08, 04:50:08",
+      "returnDate": null,
+      "Status": "Issued"
     }
   ]
 }

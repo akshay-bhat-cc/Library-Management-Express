@@ -2,19 +2,17 @@ import chalk from "chalk";
 
 export function printTableWithoutIndex<T>(data: T[]): void {
   const maxLengths: { [key: string]: number } = {};
-
   data.forEach((item: T) => {
-    for (const key in item) {
-      if (item[key]) {
+    Object.keys(item as string).forEach((key) => {
+      if (key) {
         const keyLength = String(key).length;
         const valueLength = String(item[key as keyof T]).length;
         const lengthToBePrinted = Math.max(keyLength, valueLength) + 2;
-
         if (!maxLengths[key] || lengthToBePrinted > maxLengths[key]) {
           maxLengths[key] = lengthToBePrinted;
         }
       }
-    }
+    });
   });
 
   const headers = Object.keys(maxLengths);

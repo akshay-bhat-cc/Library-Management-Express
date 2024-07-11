@@ -5,12 +5,12 @@ export interface IBookBase {
   publisher: string;
   genre: string;
   isbnNo: string;
-  numOfPages: number;
-  totalNumOfCopies: number;
+  pages: number;
+  totalCopies: number;
 }
 export interface IBook extends IBookBase {
   id: number;
-  availableNumberOfCopies: number;
+  availableCopies: number;
 }
 
 export const bookSchema = z.object({
@@ -46,11 +46,11 @@ export const bookSchema = z.object({
     .string()
     .length(13, { message: "ISBN number must be exactly 13 characters long" })
     .regex(/^\d{13}$/, { message: "ISBN number must contain only digits" }),
-  numOfPages: z
+  pages: z
     .number()
     .int({ message: "Number of pages must be an integer" })
     .min(1, { message: "Number of pages must be at least 1" }),
-  totalNumOfCopies: z
+  totalCopies: z
     .number()
     .int({ message: "Total number of copies must be an integer" })
     .min(0, { message: "Total number of copies cannot be negative" }),

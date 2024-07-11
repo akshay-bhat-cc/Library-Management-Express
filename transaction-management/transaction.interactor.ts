@@ -1,6 +1,4 @@
 import { IInteractor } from "../core/interactor";
-import { Database } from "../db/ds";
-import { LibraryDataset } from "../db/library-dataset";
 import { LibraryInteractor } from "../src/library.interactor";
 import { TransactionRepository } from "./transaction.repository";
 import {
@@ -16,6 +14,9 @@ import { BookRepository } from "../book-management/book.repository";
 import chalk from "chalk";
 import { viewCompleteList } from "../core/pagination";
 import { formatDate } from "../core/formatdate";
+import { LibraryDB } from "../db/library-db";
+import { MySqlConnectionFactory } from "../db/MySqlDbConnection";
+import { date } from "zod";
 
 export class TransactionInteractor implements IInteractor {
   menu = new Menu("\nTransaction-Management", [
@@ -28,11 +29,11 @@ export class TransactionInteractor implements IInteractor {
   ]);
   constructor(
     public libraryInteractor: LibraryInteractor,
-    private readonly db: Database<LibraryDataset>
+    private readonly poolConnectionFactory: MySqlConnectionFactory
   ) {}
-  private bookRepo = new BookRepository(this.db);
-  private memberRepo = new MemberRepository(this.db);
-  private repo = new TransactionRepository(this.db);
+  private bookRepo = new BookRepository(this.poolConnectionFactory);
+  private memberRepo = new MemberRepository(this.poolConnectionFactory);
+  private repo = new TransactionRepository(this.poolConnectionFactory);
   async showMenu(): Promise<void> {
     while (true) {
       const op = await this.menu.show();
@@ -72,58 +73,65 @@ async function issueBook(
   bookRepo: BookRepository,
   memberRepo: MemberRepository
 ) {
-  const transaction: ITransactionBase = await getTransactionInput(
-    bookRepo,
-    memberRepo
-  );
-  const transactionRecord: ITransaction = await repo.create(transaction);
-  const createdTransaction = await repo.update(transactionRecord.id);
-  if (!createdTransaction) {
-    console.log(chalk.bold.red("Error while Creating the transaction"));
-    return;
+  try {
+    const transaction: ITransactionBase = await getTransactionInput(
+      bookRepo,
+      memberRepo
+    );
+    const transactionRecord: ITransaction | undefined =
+      await repo.create(transaction);
+    const createdTransaction = await repo.getById(transactionRecord!.id);
+    if (!createdTransaction) {
+      console.log(chalk.bold.red("Error while Creating the transaction"));
+      return;
+    }
+    console.log(`Book issued successfully!\nBook ID:${createdTransaction.id}`);
+    console.table(createdTransaction);
+  } catch (error) {
+    console.error(chalk.bold.red("Error issuing book:"), error);
   }
-  console.log(`Book issued successfully!\nBook ID:${createdTransaction.id}`);
-  console.table(createdTransaction);
 }
 
 async function returnBook(repo: TransactionRepository) {
-  while (true) {
-    const transactionId = (await readLine(
-      `Please Enter the Transaction Id :`,
-      NumberParser(true)
-    )) as number;
-    const transaction = await repo.getById(transactionId);
-    if (transaction) {
-      console.table(transaction);
+  try {
+    while (true) {
+      const transactionId = (await readLine(
+        `Please Enter the Transaction Id :`,
+        NumberParser(true)
+      )) as number;
+      const transaction = await repo.getById(transactionId);
+      if (transaction) {
+        console.table(transaction);
+        const status = await readConfirmation(
+          `If the Transaction is correct then enter ${chalk.bold.yellow("Y/y or Enter ↩ ")}, else ${chalk.bold.yellow("(N/n)")} to re-enter the Transaction ID: \n`
+        );
 
-      const status = await readConfirmation(
-        `If the Transaction is correct then enter ${chalk.bold.yellow("Y/y or Enter ↩ ")}, else ${chalk.bold.yellow("(N/n)")} to re-enter the Transaction ID: \n`
-      );
-
-      if (status) {
-        if (transaction.Status === "Issued") {
-          transaction.Status = "Returned";
-          await repo.update(transaction.id);
-          console.log(
-            chalk.green(
-              `\n\nBook returned successfully!\n Transaction ID:${transaction?.id}\n`
-            )
-          );
-          console.table(transaction);
-          break;
+        if (status) {
+          if (transaction.status === "Issued") {
+            const updatedTransaction = await repo.update(transaction.id);
+            console.log(
+              chalk.green(
+                `\n\nBook returned successfully!\n Transaction ID:${transaction?.id}\n`
+              )
+            );
+            console.table(updatedTransaction);
+            break;
+          } else {
+            console.log(chalk.red("\nThis book is already returned.\n"));
+          }
         } else {
-          console.log(chalk.red("\nThis book is already returned.\n"));
+          console.log(chalk.red("\n Please Re-enter valid ID.\n"));
         }
       } else {
-        console.log(chalk.red("\n Please Re-enter valid ID.\n"));
+        console.log(
+          chalk.red(
+            "\nNo transactions found for the given ID. Please try again.\n"
+          )
+        );
       }
-    } else {
-      console.log(
-        chalk.red(
-          "\nNo transactions found for the given ID. Please try again.\n"
-        )
-      );
     }
+  } catch (error) {
+    console.error(chalk.bold.red("Error returning book:"), error);
   }
 }
 
@@ -154,60 +162,64 @@ async function getTransactionInput(
 ) {
   let bookId: number | null;
   let memberId: number | null;
-  while (true) {
-    bookId = await readLine(`Please Enter the BookId : `, NumberParser(true));
-    const book = await bookRepo.getById(bookId!);
-    if (book && bookId) {
-      console.table(book);
-      if (book.availableNumberOfCopies === 0) {
-        console.log(
-          chalk.yellow(
-            "Sorry, this book is currently out of stock. Please select another book.\n"
-          )
+  try {
+    while (true) {
+      bookId = await readLine(`Please Enter the BookId : `, NumberParser(true));
+      const book = await bookRepo.getById(bookId!);
+      if (book && bookId) {
+        console.table(book);
+        if (book.availableCopies === 0) {
+          console.log(
+            chalk.yellow(
+              "Sorry, this book is currently out of stock. Please select another book.\n"
+            )
+          );
+          continue;
+        }
+        const status = await readConfirmation(
+          `If the Book is correct then enter ${chalk.bold.yellow("Y/y or Enter ↩ ")}, else ${chalk.bold.yellow(" (N/n) ")}to re-enter the Book ID: \n`
         );
-        continue;
-      }
-      const status = await readConfirmation(
-        `If the Book is correct then enter ${chalk.bold.yellow("Y/y or Enter ↩ ")}, else ${chalk.bold.yellow(" (N/n) ")}to re-enter the Book ID: \n`
-      );
-      if (status) {
-        console.log(
-          chalk.green(
-            `\n\nYour confirmed Book is ${chalk.bold.white(book.title.toUpperCase())}`
-          )
-        );
-        break;
+        if (status) {
+          console.log(
+            chalk.green(
+              `\n\nYour confirmed Book is ${chalk.bold.white(book.title.toUpperCase())}`
+            )
+          );
+          break;
+        } else {
+          console.log(chalk.red("\nPlease Re-enter the Book ID\n"));
+        }
       } else {
-        console.log(chalk.red("\nPlease Re-enter the Book ID\n"));
+        console.log(chalk.red("\nInvalid Book ID. Please try again.\n"));
       }
-    } else {
-      console.log(chalk.red("\nInvalid Book ID. Please try again.\n"));
     }
-  }
-  while (true) {
-    memberId = await readLine(
-      `\nPlease Enter the Member Id :`,
-      NumberParser(true)
-    );
-    const member = await memberRepo.getById(memberId!);
-    if (memberId && member) {
-      console.table(member);
-      const status = await readConfirmation(
-        `\nIf the Member is correct then enter ${chalk.bold.yellow("Y/y or Enter ↩ ")}, else ${chalk.bold.yellow("(N/n)")} to re-enter the Member ID: \n`
+    while (true) {
+      memberId = await readLine(
+        `\nPlease Enter the Member Id :`,
+        NumberParser(true)
       );
-      if (status) {
-        console.log(
-          chalk.green(
-            `\n\nYou confirmed Member ID ${chalk.bold.white(memberId)}\n`
-          )
+      const member = await memberRepo.getById(memberId!);
+      if (memberId && member) {
+        console.table(member);
+        const status = await readConfirmation(
+          `\nIf the Member is correct then enter ${chalk.bold.yellow("Y/y or Enter ↩ ")}, else ${chalk.bold.yellow("(N/n)")} to re-enter the Member ID: \n`
         );
-        break;
+        if (status) {
+          console.log(
+            chalk.green(
+              `\n\nYou confirmed Member ID ${chalk.bold.white(memberId)}\n`
+            )
+          );
+          break;
+        } else {
+          console.log(chalk.red("\nPlease Re-enter the Your Member ID\n"));
+        }
       } else {
-        console.log(chalk.red("\nPlease Re-enter the Your Member ID\n"));
+        console.log(chalk.red("\nInvalid Member ID. Please try again.\n"));
       }
-    } else {
-      console.log(chalk.red("\nInvalid Member ID. Please try again.\n"));
     }
+  } catch (error) {
+    console.error(chalk.bold.red("Error getting transaction input:"), error);
   }
   return {
     bookId: bookId!,
@@ -218,65 +230,74 @@ async function getTransactionInput(
 async function searchTransaction(
   repo: TransactionRepository
 ): Promise<ITransaction | null> {
-  while (true) {
-    const id = await readLine(
-      "Please Enter the Transaction Id:",
-      NumberParser()
-    );
-    const transaction = await repo.getById(id!);
-    if (!transaction) {
-      console.log(
-        chalk.bold.red(
-          "\nNo Transaction found!!  Please Enter Valid Transaction ID!!!\n"
-        )
+  try {
+    while (true) {
+      const id = await readLine(
+        "Please Enter the Transaction Id:",
+        NumberParser()
       );
-      continue;
-    } else {
-      console.table(transaction);
-      return transaction;
+      const transaction = await repo.getById(id!);
+      if (!transaction) {
+        console.log(
+          chalk.bold.red(
+            "\nNo Transaction found!!  Please Enter Valid Transaction ID!!!\n"
+          )
+        );
+        continue;
+      } else {
+        console.table(transaction);
+        return transaction;
+      }
     }
+  } catch (error) {
+    console.error(chalk.bold.red("Error searching transaction:"), error);
+    return null;
   }
 }
 
 async function listTransaction(repo: TransactionRepository) {
-  const search = await readLine(
-    "\nPlease enter your search  (Member ID or Book ID):\n",
-    StringParser(true, true)
-  );
-  const offset =
-    (await readLine(
-      "Please enter the search offset value (e.g., 0 to start from the beginning):\n",
-      NumberParser(true)
-    )) || 0;
-  const limit =
-    (await readLine(
-      "\nPlease enter the search limit value (the number of results to return):\n",
-      NumberParser(true)
-    )) || 10;
+  try {
+    const search = await readLine(
+      "\nPlease enter your search  (Member ID or Book ID):\n",
+      StringParser(true, true)
+    );
+    const offset =
+      (await readLine(
+        "Please enter the search offset value (e.g., 0 to start from the beginning):\n",
+        NumberParser(true)
+      )) || 0;
+    const limit =
+      (await readLine(
+        "\nPlease enter the search limit value (the number of results to return):\n",
+        NumberParser(true)
+      )) || 10;
 
-  const totalTransaction = repo.getTotalCount();
-  await viewCompleteList<ITransactionBase, ITransaction>(
-    repo,
-    offset,
-    limit,
-    totalTransaction,
-    search
-  );
-}
-async function todaysDueList(repo: TransactionRepository) {
-  const today = new Date();
-  const formattedTodaysDate = formatDate(today).split(",")[1];
-  const transactions = await repo.getAllTransaction();
-  const dueToday = transactions.filter((transaction) => {
-    const formattedDate = transaction.dueDate.split(",")[1];
-    return formattedDate === formattedTodaysDate;
-  });
-
-  if (dueToday.length === 0) {
-    console.log(chalk.green("No transactions are due today."));
-    return;
+    const totalTransaction = await repo.getTotalCount();
+    await viewCompleteList<ITransactionBase, ITransaction>(
+      repo,
+      offset,
+      limit,
+      totalTransaction!,
+      search
+    );
+  } catch (error) {
+    console.error(chalk.bold.red("Error listing transactions:"), error);
   }
+}
 
-  console.log(chalk.yellow("Transactions due today:"));
-  console.table(dueToday);
+async function todaysDueList(repo: TransactionRepository) {
+  try {
+    const todayDate = formatDate(new Date()).split(",")[1];
+    const todaysTransactions = await repo.getTransactionByDate(todayDate);
+
+    if (todaysTransactions.length === 0) {
+      console.log(chalk.green("No transactions are due today."));
+      return;
+    }
+
+    console.log(chalk.yellow("Transactions due today:"));
+    console.table(todaysTransactions);
+  } catch (error) {
+    console.error(chalk.bold.red("Error getting today's due list:"), error);
+  }
 }

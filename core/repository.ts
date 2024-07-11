@@ -4,9 +4,11 @@ export interface IRepository<
   MutationModel,
   CompleteModel extends MutationModel,
 > {
-  create(data: MutationModel): Promise<CompleteModel>;
-  update(id: number, data: MutationModel): Promise<CompleteModel | null>;
-  delete(id: number): Promise<CompleteModel | null>;
-  getById(id: number): Promise<CompleteModel | null>;
-  list(params: IPageRequest): IPagesResponse<CompleteModel>;
+  create(data: MutationModel): Promise<CompleteModel | undefined>;
+  update(id: number, data: MutationModel): Promise<CompleteModel | undefined>;
+  delete(id: number): Promise<CompleteModel | undefined>;
+  getById(id: number): Promise<CompleteModel | undefined>;
+  list(
+    params: IPageRequest
+  ): Promise<IPagesResponse<CompleteModel> | undefined>;
 }

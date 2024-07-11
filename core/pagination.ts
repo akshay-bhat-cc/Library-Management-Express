@@ -32,25 +32,23 @@ export async function viewCompleteList<T, U extends T>(
 
   const loadData = async () => {
     const validateOffset = currentPage * limit + (offset % limit);
-    const result = repo.list({
+    const result = await repo.list({
       search: search || undefined,
       offset: validateOffset > 0 ? validateOffset : 0,
       limit: limit,
     });
 
-    if (result.items.length > 0) {
-      const totalPages =
-        limit % 2 === 0
-          ? Math.ceil(totalCount / limit)
-          : Math.ceil(totalCount / limit) - 1;
+    if (result && result.items.length > 0) {
+      const totalPages = Math.ceil(totalCount / limit);
       console.log(
-        chalk.bold.cyan(`\n\nPage: ${currentPage + 1} of ${totalPages})`)
+        chalk.bold.cyan(`\n\nPage: ${currentPage + 1} of ${totalPages}`)
       );
       printTableWithoutIndex<T>(result.items);
       const hasPreviousPage = currentPage > 0;
       const hasNextPage =
         result.pagination.limit + result.pagination.offset <
         result.pagination.total;
+
       if (hasPreviousPage) {
         console.log(chalk.bold.yellow(`p\tPrevious Page`));
       }
@@ -61,7 +59,6 @@ export async function viewCompleteList<T, U extends T>(
         console.log(`q\tExit List`);
         const askChoice = async () => {
           const op = await readChar("\nChoice - ");
-          console.log(op, "\n\n");
           if (op === "p" && hasPreviousPage) {
             currentPage--;
             await loadData();
@@ -69,7 +66,6 @@ export async function viewCompleteList<T, U extends T>(
             currentPage++;
             await loadData();
           } else if (op !== "q") {
-            console.log("---", op, "---");
             console.log(chalk.bold.red("\n\nInvalid input"));
             await askChoice();
           }
