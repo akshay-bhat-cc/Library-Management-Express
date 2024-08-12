@@ -1,0 +1,1 @@
+ALTER TABLE `transactions` ADD `dueDays` varchar(100) NOT NULL;

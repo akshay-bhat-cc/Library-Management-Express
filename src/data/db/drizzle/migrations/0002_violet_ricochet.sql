@@ -1,0 +1,1 @@
+ALTER TABLE `books` MODIFY COLUMN `pages` varchar(100) NOT NULL;

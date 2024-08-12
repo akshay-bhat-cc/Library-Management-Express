@@ -6,3 +6,5 @@ repl.ts
 test2.ts
 calc.ts
 .vscode/
+.env*
+env*

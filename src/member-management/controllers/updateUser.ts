@@ -1,0 +1,26 @@
+import { NextFunction, Request, Response } from "express";
+import { memberRepository } from "../members.express.server";
+
+export const updateUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const id = Number(req.params.id);
+    if (id != req.userId) {
+      res.status(401).json({ message: "Forbidden" });
+    }
+    const data = req.body;
+    const updatedUser = await memberRepository.update(id, data);
+    if (!updatedUser) {
+      return res
+        .status(404)
+        .json({ message: "User not found or update failed" });
+    }
+
+    res.status(200).json({ message: "User updated successfully", updatedUser });
+  } catch (err) {
+    next(err);
+  }
+};

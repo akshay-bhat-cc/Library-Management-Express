@@ -1,0 +1,1 @@
+ALTER TABLE `transactions` MODIFY COLUMN `Status` enum('Issued','Returned','OverDue');
