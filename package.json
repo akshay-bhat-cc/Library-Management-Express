@@ -1,13 +1,23 @@
 {
   "scripts": {
     "start": "ts-node src/library.ts",
-    "test": "vitest"
+    "book:server": " ts-node src/book-management/book.server.ts",
+    "member:server": "tsx watch src/member-management/members.express.server.ts",
+    "test": "vitest",
+    "db:generate": "npx drizzle-kit generate",
+    "db:migrate": "ts-node src/db/drizzle/migrate.ts"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.0.2",
     "@eslint/js": "9.0.0",
     "@faker-js/faker": "8.4.1",
+    "@types/bcrypt": "5.0.2",
+    "@types/cookie-parser": "1.4.7",
+    "@types/cors": "2.8.17",
+    "@types/express": "4.17.21",
+    "@types/jsonwebtoken": "9.0.6",
     "@types/node": "20.14.10",
+    "drizzle-kit": "0.23.0",
     "eslint": "8.57.0",
     "eslint-config-airbnb": "19.0.4",
     "eslint-config-prettier": "9.1.0",
@@ -18,11 +28,18 @@
     "vitest": "1.6.0"
   },
   "dependencies": {
+    "bcrypt": "5.1.1",
     "chalk": "4.1.2",
     "commander": "12.1.0",
+    "cookie-parser": "1.4.6",
+    "cors": "2.8.5",
     "dotenv": "16.4.5",
+    "drizzle-orm": "0.32.0",
+    "express": "4.19.2",
     "globals": "15.8.0",
+    "jsonwebtoken": "9.0.2",
     "mysql2": "3.10.2",
+    "tsx": "4.17.0",
     "zod": "3.23.8"
   }
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `members` ADD `refresh_token` varchar(255);

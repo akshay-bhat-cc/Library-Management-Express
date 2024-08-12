@@ -1,13 +1,10 @@
-import { BookInteractor } from "../book-management/book.interactor";
-import { IInteractor } from "../core/interactor";
-import { Menu } from "../core/menu";
-import { MemberInteractor } from "../member-management/member.interactor";
-import { TransactionInteractor } from "../transaction-management/transaction.interactor";
+import { BookInteractor } from "./book-management/book.interactor";
+import { IInteractor } from "./core/interactor";
+import { Menu } from "./core/menu";
 import chalk from "chalk";
-import { DBConfig } from "../db/mysqldb";
-import { LibraryDB } from "../db/library-db";
-import { AppEnvs } from "../read-env";
-import { MySqlConnectionFactory } from "../db/MySqlDbConnection";
+import { MySql2Database } from "drizzle-orm/mysql2";
+import { TransactionInteractor } from "./transaction-management/transaction.interactor";
+import { MemberInteractor } from "./member-management/member.interactor";
 
 export class LibraryInteractor implements IInteractor {
   menu = new Menu("Library-Management", [
@@ -16,13 +13,8 @@ export class LibraryInteractor implements IInteractor {
     { key: "3", label: "Transaction" },
     { key: "4", label: "Exit" },
   ]);
-  // TODO should we create DBconfig in the Interactor and pass this as argument or initialize within the Librarydb as a memmber
-  private readonly config: DBConfig = {
-    dbURL: AppEnvs.DATABASE_URL,
-  };
-  poolConnectionFactory = new MySqlConnectionFactory(this.config);
 
-  constructor() {}
+  constructor(private db: MySql2Database<Record<string, never>>) {}
   async showMenu(): Promise<void> {
     let loop = true;
     while (loop) {
@@ -30,24 +22,18 @@ export class LibraryInteractor implements IInteractor {
       if (op) {
         switch (op?.key.toLocaleLowerCase()) {
           case "1":
-            const bookInteractor = new BookInteractor(
-              this,
-              this.poolConnectionFactory
-            );
+            const bookInteractor = new BookInteractor(this, this.db);
             await bookInteractor.showMenu();
             break;
           case "2":
-            const memberInteractor = new MemberInteractor(
-              this,
-              this.poolConnectionFactory
-            );
+            const memberInteractor = new MemberInteractor(this, this.db);
             await memberInteractor.showMenu();
             break;
 
           case "3":
             const transactionInteractor = new TransactionInteractor(
               this,
-              this.poolConnectionFactory
+              this.db
             );
             await transactionInteractor.showMenu();
             break;
