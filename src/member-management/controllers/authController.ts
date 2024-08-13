@@ -1,15 +1,19 @@
-import { Request, Response } from "express";
 import { AppEnvs } from "../../../read-env";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { memberRepository } from "../members.express.server";
+import {
+  memberRepository,
+  userRefreshTokenRepository,
+} from "../members.express.server";
+import { Request, Response } from "express";
+import { formatDate } from "../../core/formatdate";
 
-export const handleLogin = async (request: Request, response: Response) => {
+export const handleLogin = async (req: Request, res: Response) => {
   try {
-    const { email, password } = request.body;
+    const { email, password } = req.body;
 
     if (!email || !password) {
-      return response
+      return res
         .status(400)
         .json({ message: "Username and password are required." });
     }
@@ -17,7 +21,7 @@ export const handleLogin = async (request: Request, response: Response) => {
     const foundUser = await memberRepository.getByEmail(email);
 
     if (!foundUser) {
-      return response.sendStatus(401);
+      return res.sendStatus(401);
     }
 
     const match = await bcrypt.compare(password, foundUser.password);
@@ -26,31 +30,32 @@ export const handleLogin = async (request: Request, response: Response) => {
       const accessToken = jwt.sign(
         { id: foundUser.id, email: foundUser.email },
         AppEnvs.ACCESS_TOKEN_SECRET,
-        { expiresIn: "30s" }
+        { expiresIn: "1m" }
       );
       const refreshToken = jwt.sign(
         { id: foundUser.id, email: foundUser.email },
         AppEnvs.REFRESH_TOKEN_SECRET,
         { expiresIn: "1d" }
       );
-      const user = await memberRepository.getByEmail(email);
-      if (!user) {
-        throw Error("User not found");
-      }
-      await memberRepository.update(user?.id, { refreshToken: refreshToken });
-      response.cookie("jwt", refreshToken, {
+
+      await userRefreshTokenRepository.create({
+        memberId: BigInt(foundUser.id),
+        refreshToken: refreshToken,
+      });
+
+      res.cookie("jwt", refreshToken, {
         httpOnly: true,
         sameSite: "none",
         secure: true,
         maxAge: 24 * 60 * 60 * 1000,
       });
 
-      response.json({ accessToken });
+      res.json({ accessToken });
     } else {
-      response.sendStatus(401);
+      res.sendStatus(401);
     }
   } catch (error) {
     console.error("Error during login:", error);
-    response.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: "Internal server error." });
   }
 };

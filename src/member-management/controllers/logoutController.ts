@@ -1,5 +1,5 @@
+import { userRefreshTokenRepository } from "../members.express.server";
 import { Request, Response } from "express";
-import { memberRepository } from "../members.express.server";
 
 export const handleLogout = async (req: Request, res: Response) => {
   // On client, also delete the accessToken
@@ -9,20 +9,16 @@ export const handleLogout = async (req: Request, res: Response) => {
   const refreshToken = cookies.jwt;
 
   // Is refreshToken in db?
-  const foundUser = await memberRepository.getByRefreshToken(refreshToken);
+  const foundUser =
+    await userRefreshTokenRepository.getByRefreshToken(refreshToken);
   if (!foundUser) {
     res.clearCookie("jwt", { httpOnly: true, sameSite: "none", secure: true });
     return res.sendStatus(204);
   }
 
   // Delete refreshToken in db
-
-  const currentUser = await memberRepository.update(foundUser.id, {
-    refreshToken: null,
-  });
+  await userRefreshTokenRepository.deleteByRefreshToken(refreshToken);
 
   res.clearCookie("jwt", { httpOnly: true, sameSite: "none", secure: true });
   res.sendStatus(204);
 };
-
-module.exports = { handleLogout };

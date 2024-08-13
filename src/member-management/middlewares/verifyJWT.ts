@@ -1,17 +1,13 @@
-import jwt, { Secret, JwtPayload } from "jsonwebtoken";
-import { Request, Response, NextFunction } from "express";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import { NextFunction } from "express";
 import { AppEnvs } from "../../../read-env";
 import { memberRepository } from "../members.express.server";
-
-export const SECRET_KEY: Secret = "your-secret-key-here";
-
-export interface CustomRequest extends Request {
-  token: string | JwtPayload;
-}
+import { CustomResponse } from "../types/customResponse";
+import { CustomRequest } from "../types/customRequest";
 
 export const verifyJWT = async (
-  req: Request,
-  res: Response,
+  req: CustomRequest,
+  res: CustomResponse,
   next: NextFunction
 ) => {
   try {
@@ -25,7 +21,7 @@ export const verifyJWT = async (
     }
 
     const decoded = jwt.verify(token, AppEnvs.ACCESS_TOKEN_SECRET);
-    (req as CustomRequest).token = decoded;
+    req.token = decoded;
     const user = await memberRepository.getById((decoded as JwtPayload).id);
     req.userId = user!.id;
     next();

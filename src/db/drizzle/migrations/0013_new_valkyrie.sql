@@ -1,0 +1,1 @@
+ALTER TABLE `userRefreshTokens` RENAME COLUMN `refreshtoken` TO `refreshToken`;

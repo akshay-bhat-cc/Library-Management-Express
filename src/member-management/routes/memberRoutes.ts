@@ -10,7 +10,7 @@ import { updateUser } from "../controllers/updateUser";
 
 const router = express.Router();
 
-router.get("/", handleRefreshToken);
+router.get("/refresh", handleRefreshToken);
 router.post("/register", handleNewMember);
 router.post("/login", handleLogin);
 router.get("/logout", handleLogout);
