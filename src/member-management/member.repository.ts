@@ -1,6 +1,6 @@
 import { IPageRequest, IPagesResponse } from "../core/pagination";
 import { IRepository } from "../core/repository";
-import { IMemberBase, IMember, IMemberUpdate } from "./models/member.model";
+import { IMemberBase, IMember } from "./models/member.model";
 import { MySql2Database } from "drizzle-orm/mysql2";
 import { members } from "../db/drizzle/schema";
 import { count, eq, like, or } from "drizzle-orm";
@@ -24,7 +24,7 @@ export class MemberRepository implements IRepository<IMemberBase, IMember> {
 
   async update(
     memberId: number,
-    data: IMemberUpdate
+    data: IMemberBase
   ): Promise<IMember | undefined> {
     try {
       const [result] = await this.db
@@ -130,18 +130,6 @@ export class MemberRepository implements IRepository<IMemberBase, IMember> {
         .select({ value: count() })
         .from(members);
       return totalCount.value;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async getByRefreshToken(refreshToken: string) {
-    try {
-      const [member] = await this.db
-        .select()
-        .from(members)
-        .where(eq(members.refreshToken, refreshToken));
-      return member as IMember;
     } catch (error) {
       throw error;
     }

@@ -9,7 +9,7 @@ export const getUserDetails = async (
   try {
     const id = Number(req.params.id);
     if (id != req.userId) {
-      res.status(401).json({ message: "Forbidden" });
+      res.status(401).json({ message: "Unauthorized" });
     }
     const user = await memberRepository.getById(id);
     if (!user) {

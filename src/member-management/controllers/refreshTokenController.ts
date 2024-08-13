@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { getDB } from "../../db/drizzle/drizzleDb";
 import { MemberRepository } from "../member.repository";
 import { AppEnvs } from "../../../read-env";
+import { userRefreshTokenRepository } from "../members.express.server";
 
 const db = getDB();
 const memberRepository = new MemberRepository(db);
@@ -20,7 +21,10 @@ export const handleRefreshToken = async (
   const refreshToken = cookies.jwt;
 
   try {
-    const foundUser = await memberRepository.getByRefreshToken(refreshToken);
+    const token =
+      await userRefreshTokenRepository.getByRefreshToken(refreshToken);
+    const foundUser = await memberRepository.getById(Number(token?.memberId));
+
     if (!foundUser) {
       res.sendStatus(403); // Forbidden
       return;
@@ -48,7 +52,7 @@ export const handleRefreshToken = async (
             email: (decoded as JwtPayload).email,
           },
           AppEnvs.ACCESS_TOKEN_SECRET,
-          { expiresIn: "30s" }
+          { expiresIn: "1m" }
         );
 
         res.json({ accessToken });

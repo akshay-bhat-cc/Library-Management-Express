@@ -9,16 +9,6 @@ export interface IMemberBase {
 
 export interface IMember extends IMemberBase {
   id: number;
-  refreshToken?: string | null;
-}
-
-export interface IMemberUpdate {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phoneNumber?: string;
-  password?: string;
-  refreshToken?: string | null;
 }
 
 export const memberSchema = z.object({

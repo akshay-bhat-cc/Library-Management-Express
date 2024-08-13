@@ -1,5 +1,6 @@
 import {
   bigint,
+  boolean,
   int,
   mysqlEnum,
   mysqlTable,
@@ -26,7 +27,17 @@ export const members = mysqlTable("members", {
   email: varchar("email", { length: 255 }).unique().notNull(),
   phoneNumber: varchar("phoneNumber", { length: 10 }).notNull(),
   password: varchar("password", { length: 255 }).notNull(),
-  refreshToken: varchar("refreshToken", { length: 255 }),
+  role: mysqlEnum("role", ["librarian", "member"]),
+});
+
+export const userRefreshTokens = mysqlTable("userRefreshTokens", {
+  id: serial("id"),
+  memberId: bigint("memberId", { mode: "bigint", unsigned: true })
+    .references(() => members.id)
+    .notNull(),
+  refreshToken: varchar("refreshToken", { length: 255 }).notNull(),
+  createdAt: varchar("createdAt", { length: 255 }).notNull(),
+  expiryDate: varchar("expiryDate", { length: 255 }).notNull(),
 });
 
 export const transactions = mysqlTable("transactions", {

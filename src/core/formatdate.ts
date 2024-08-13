@@ -22,5 +22,5 @@ export const formatDate = (date: Date) => {
   const fullDate = `${year}-${month}-${dayOfMonth}`;
   const time = `${hours}:${minutes}:${seconds}`;
 
-  return `${day}, ${fullDate}, ${time}`;
+  return `${fullDate}, ${time},${day}`;
 };

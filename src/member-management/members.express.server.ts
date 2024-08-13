@@ -6,10 +6,12 @@ import cors from "cors";
 import corsOptions from "../configs/corsOptions";
 import cookieParser from "cookie-parser";
 import memberRoutes from "./routes/memberRoutes";
+import { UserRefreshTokenRepository } from "../User-RefresTokens/userRefreshTokens.repository";
 
 export const db = getDB();
 export const memberRepository = new MemberRepository(db);
 export const bookRepository = new BookRepository(db);
+export const userRefreshTokenRepository = new UserRefreshTokenRepository(db);
 
 const app = express();
 
@@ -20,6 +22,16 @@ app.use(cookieParser());
 
 // Use the member routes
 app.use("/library/members", memberRoutes);
+
+app.get("/library/admin/deleteExpired", async (req, res) => {
+  try {
+    await userRefreshTokenRepository.deleteExpired();
+    res.sendStatus(200);
+  } catch (err) {
+    console.log(err);
+    res.sendStatus(404);
+  }
+});
 
 app.listen(3000, () => {
   console.log("Server running on port 3000");
