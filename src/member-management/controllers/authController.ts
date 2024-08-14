@@ -6,7 +6,6 @@ import {
   userRefreshTokenRepository,
 } from "../members.express.server";
 import { Request, Response } from "express";
-import { formatDate } from "../../core/formatdate";
 
 export const handleLogin = async (req: Request, res: Response) => {
   try {
