@@ -1,8 +1,8 @@
-import { NextFunction, Request, Response } from "express";
-import { memberRepository } from "../members.express.server";
+import { NextFunction, Response } from "express";
+import { CustomRequest, memberRepository } from "../members.express.server";
 
 export const updateUser = async (
-  req: Request,
+  req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {

@@ -1,7 +1,10 @@
-import { userRefreshTokenRepository } from "../members.express.server";
+import {
+  CustomRequest,
+  userRefreshTokenRepository,
+} from "../members.express.server";
 import { Request, Response } from "express";
 
-export const handleLogout = async (req: Request, res: Response) => {
+export const handleLogout = async (req: CustomRequest, res: Response) => {
   // On client, also delete the accessToken
 
   const cookies = req.cookies;

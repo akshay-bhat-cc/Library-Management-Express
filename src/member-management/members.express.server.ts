@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request } from "express";
 import { getDB } from "../db/drizzle/drizzleDb";
 import { MemberRepository } from "./member.repository";
 import { BookRepository } from "../book-management/book.repository";
@@ -7,6 +7,11 @@ import corsOptions from "../configs/corsOptions";
 import cookieParser from "cookie-parser";
 import memberRoutes from "./routes/memberRoutes";
 import { UserRefreshTokenRepository } from "../User-RefresTokens/userRefreshTokens.repository";
+import jwt from "jsonwebtoken";
+export interface CustomRequest extends Request {
+  token: string | jwt.JwtPayload;
+  userId: number;
+}
 
 export const db = getDB();
 export const memberRepository = new MemberRepository(db);

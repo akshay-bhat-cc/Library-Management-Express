@@ -1,9 +1,9 @@
 import { memberSchema } from "../models/member.model";
 import bcrypt from "bcrypt";
-import { memberRepository } from "../members.express.server";
-import { Request, Response } from "express";
+import { CustomRequest, memberRepository } from "../members.express.server";
+import { Response } from "express";
 
-export const handleNewMember = async (req: Request, res: Response) => {
+export const handleNewMember = async (req: CustomRequest, res: Response) => {
   try {
     const data = req.body;
     const validateData = memberSchema.parse(data);

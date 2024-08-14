@@ -1,15 +1,18 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { getDB } from "../../db/drizzle/drizzleDb";
 import { MemberRepository } from "../member.repository";
 import { AppEnvs } from "../../../read-env";
-import { userRefreshTokenRepository } from "../members.express.server";
+import {
+  CustomRequest,
+  userRefreshTokenRepository,
+} from "../members.express.server";
 
 const db = getDB();
 const memberRepository = new MemberRepository(db);
 
 export const handleRefreshToken = async (
-  req: Request,
+  req: CustomRequest,
   res: Response
 ): Promise<void> => {
   const cookies = req.cookies;

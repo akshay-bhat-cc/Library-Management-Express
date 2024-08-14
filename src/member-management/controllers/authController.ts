@@ -2,12 +2,13 @@ import { AppEnvs } from "../../../read-env";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import {
+  CustomRequest,
   memberRepository,
   userRefreshTokenRepository,
 } from "../members.express.server";
-import { Request, Response } from "express";
+import { Response } from "express";
 
-export const handleLogin = async (req: Request, res: Response) => {
+export const handleLogin = async (req: CustomRequest, res: Response) => {
   try {
     const { email, password } = req.body;
 

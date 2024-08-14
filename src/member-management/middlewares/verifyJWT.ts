@@ -1,10 +1,10 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { NextFunction, Request, Response } from "express";
 import { AppEnvs } from "../../../read-env";
-import { memberRepository } from "../members.express.server";
+import { CustomRequest, memberRepository } from "../members.express.server";
 
 export const verifyJWT = async (
-  req: Request,
+  req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
